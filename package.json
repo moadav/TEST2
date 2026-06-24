@@ -1,12 +1,7 @@
 {
-  "name": "sveltekit-seo-testapp",
-  "version": "0.0.1",
+  "name": "nuxt-seo-testapp",
+  "private": true,
   "type": "module",
-  "scripts": { "dev": "vite dev", "build": "vite build", "preview": "vite preview" },
-  "devDependencies": {
-    "@sveltejs/adapter-auto": "^3.0.0",
-    "@sveltejs/kit": "^2.5.0",
-    "svelte": "^4.2.0",
-    "vite": "^5.0.0"
-  }
+  "scripts": { "dev": "nuxt dev", "build": "nuxt build", "generate": "nuxt generate", "preview": "nuxt preview" },
+  "dependencies": { "nuxt": "^3.12.0", "vue": "^3.4.0" }
 }
