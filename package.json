@@ -1,7 +1,0 @@
-{
-  "name": "nuxt-seo-testapp",
-  "private": true,
-  "type": "module",
-  "scripts": { "dev": "nuxt dev", "build": "nuxt build", "generate": "nuxt generate", "preview": "nuxt preview" },
-  "dependencies": { "nuxt": "^3.12.0", "vue": "^3.4.0" }
-}
