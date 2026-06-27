@@ -1,3 +1,8 @@
+<svelte:head>
+  <title>Northwind Studio</title>
+  <meta name="description" content="We design and build fast, accessible websites for small teams and independent makers." />
+</svelte:head>
+
 <h1>Northwind Studio</h1>
 <p>We design and build fast, accessible websites for small teams and independent makers.</p>
 
