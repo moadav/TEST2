@@ -1,46 +1,53 @@
-# React SEO Testbed
+# Stale-Lockfile Testbed
 
-A deliberately SEO-incomplete **React + Vite** SPA for testing **Optimizy Tier 2 setup PRs** (Helmet-style
-wiring). It validates the build gate's **permissive-install** path — React setup INSTALLS react-helmet-async,
-so its PR legitimately changes package.json + package-lock.json (unlike the insertion frameworks).
+A React + Vite **insertion-eligible** SEO testbed whose committed `package-lock.json` is deliberately
+**out of sync** with `package.json` (`package.json` asks for react-router-dom ^7, the lockfile has 6.x).
+This is the exact condition that makes a frozen `npm ci` refuse — used to validate the setup **stale-lockfile
+policy** (rollout safety item #1).
 
-## Routing shape matters (this is what the classifier resolves)
-The React setup route classifier resolves each `<Route element={<Home/>}>` by:
-1. finding the import — `import Home from './pages/Home'` — in the router file, then
-2. resolving that specifier to a file (appending .tsx/.jsx/.ts/.js).
+## Why it's out of sync
+The lockfile was generated for react-router-dom 6.x, then package.json was bumped to ^7.1.0 WITHOUT
+reinstalling. So `npm ci` fails with:
+    npm error code EUSAGE
+    npm error `npm ci` can only install packages when your package.json and package-lock.json ... are in sync.
+That EUSAGE signal is what the gate's IsStaleLockfileFailure detector matches (distinct from 404/network).
 
-So this repo uses **split page files** (`src/pages/*.jsx`) with **extensionless imports**
-(`import Home from './pages/Home'`, NOT `'./pages/Home.jsx'`). Two things break resolution and make the
-mutator skip every route with "no component file resolved":
-- writing the extension in the import (`'./pages/Home.jsx'`) — the resolver appends its own, so it looks for
-  `Home.jsx.jsx` and fails;
-- colocating components in App.jsx with no import — there's no import for the resolver to follow.
+## The three cases to run (this is the end-to-end proof of item #1)
 
-## What the detector sees
-- **Framework:** React/Vite (react + vite + a `createRoot(...)` entry in src/main.jsx)
-- **Status:** `Missing` — no react-helmet(-async) dependency, no `<Helmet>`, no head manager/custom SEO
-  component, and index.html has no `<title>`. So the project is **setup-eligible**.
+### Case A — default run (no fallback flag): FAIL CLEARLY
+Run setup with SEO_SETUP_ALLOW_LOCKFILE_FALLBACK unset (or != "1").
+EXPECT:
+  - status: InstallOrBuildFailed
+  - the message names the cause specifically: "committed lockfile is out of sync with package.json ...
+    npm ci refused" (NOT an opaque "install failed")
+  - result flag StaleLockfile = true
+  - NO PR opened, lockfile NOT rewritten
 
-## What a setup run does
-- adds `react-helmet-async` to package.json (a real dependency install),
-- mounts one `<HelmetProvider>` at the render entry (src/main.jsx),
-- adds a `<Helmet>` with title/description to each resolved page component, seeded from its `<h1>`/`<p>`,
-- runs the build gate, which — because dependencies changed — uses a **permissive install**, so
-  package-lock.json updates to match.
+### Case B — run WITH fallback enabled: FALL BACK, FLAGGED
+Set SEO_SETUP_ALLOW_LOCKFILE_FALLBACK=1, run setup again.
+EXPECT:
+  - status: PrOpened (permissive retry installed + build passed)
+  - result flag LockfileFallbackUsed = true
+  - PR body contains the note: "your committed lockfile was out of sync with package.json. Setup updated
+    the lockfile to match as part of this PR"
+  - the PR's changed files INCLUDE package-lock.json (updated to 7.x) — expected & explained
 
-Expected PR change set: **package.json + package-lock.json + src/main.jsx + src/pages/{Home,About,Services,Contact}.jsx**.
-The lockfile change here is CORRECT and intended (contrast: SvelteKit/Nuxt PRs must NOT change the lockfile).
+### Case C — genuinely broken repo (control): FAIL, NO FALLBACK
+Temporarily add a nonexistent dependency to package.json (e.g. "no-such-pkg-zzz": "1.0.0") and regenerate
+the lockfile so pkg.json and lock AGREE on the bad package:
+    npm install --package-lock-only   # (will still write the bad entry)
+Then run setup even WITH SEO_SETUP_ALLOW_LOCKFILE_FALLBACK=1.
+EXPECT:
+  - status: InstallOrBuildFailed (the install fails on E404, NOT a lockfile-sync issue)
+  - NO fallback (the gate must only fall back on stale-lockfile, never on network/404/other)
+  - proves the detector doesn't over-trigger
 
-## Run / deploy / test
-```bash
-npm install && npm run build && npm run preview
-```
-Deploy `dist/` to any static host, crawl the live URL so a Website with open issues exists, then dry-run
-(`dryRun: true` → DryRunReady) before the real run.
+## To make it a clean insertion testbed for Nuxt/SvelteKit instead
+The same principle applies to any manager — commit a lockfile, then change package.json without reinstalling.
+For npm the signal is EUSAGE; pnpm is ERR_PNPM_OUTDATED_LOCKFILE; yarn strings are unverified (confirm on
+the runner).
 
-## The contrast this validates
-| Framework | Setup type   | Lockfile in PR?    | Gate install |
-|-----------|--------------|--------------------|--------------|
-| Nuxt      | insertion    | no                 | frozen (npm ci) |
-| SvelteKit | insertion    | no                 | frozen |
-| React     | installation | **yes** (intended) | permissive (npm install) |
+## Detector status
+Insertion-eligible React/Vite (no head mechanism -> Missing -> setup would wire Helmet WITHOUT adding a
+dependency, so DependenciesChanged=false -> frozen npm ci -> hits the stale lockfile). That's the point:
+an insertion setup on a repo with a pre-existing stale lockfile is exactly where item #1 matters.
