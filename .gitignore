@@ -1,7 +1,5 @@
 node_modules
-.output
-.nuxt
-.data
 dist
+.vite
 .env
 .DS_Store

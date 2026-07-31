@@ -1,15 +1,21 @@
 {
-  "name": "nuxt-seo-testbed",
-  "description": "A deliberately SEO-incomplete Nuxt 3 site for testing Optimizy Tier 2 setup PRs.",
+  "name": "react-seo-testbed",
+  "description": "A deliberately SEO-incomplete React + Vite site for testing Optimizy Tier 2 setup PRs (react-helmet-async wiring).",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "nuxt dev",
-    "build": "nuxt build",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0"
   },
   "devDependencies": {
-    "nuxt": "^3.13.0"
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0"
   }
 }
