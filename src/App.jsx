@@ -1,8 +1,40 @@
 import { Routes, Route, Link } from 'react-router-dom';
-import Home from './pages/Home.jsx';
-import About from './pages/About.jsx';
-import Services from './pages/Services.jsx';
-import Contact from './pages/Contact.jsx';
+
+function Home() {
+  return (
+    <section>
+      <h1>Northwind Studio</h1>
+      <p>We design and build fast, accessible websites for small teams and independent makers.</p>
+    </section>
+  );
+}
+
+function About() {
+  return (
+    <section>
+      <h1>About Northwind Studio</h1>
+      <p>A small group of designers and engineers who care about calm, durable software.</p>
+    </section>
+  );
+}
+
+function Services() {
+  return (
+    <section>
+      <h1>Services</h1>
+      <p>Website design, frontend build, and performance work for growing businesses.</p>
+    </section>
+  );
+}
+
+function Contact() {
+  return (
+    <section>
+      <h1>Contact Us</h1>
+      <p>Tell us about your project and we will get back to you within two business days.</p>
+    </section>
+  );
+}
 
 export default function App() {
   return (
