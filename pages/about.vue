@@ -1,3 +1,10 @@
+<script setup>
+useSeoMeta({
+  title: 'About Northwind Studio',
+  description: 'A small group of designers and engineers who care about calm, durable software.'
+})
+</script>
+
 <template>
   <section>
     <h1>About Northwind Studio</h1>

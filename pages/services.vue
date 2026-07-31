@@ -1,3 +1,10 @@
+<script setup>
+useSeoMeta({
+  title: 'Services',
+  description: 'Website design, frontend build, and performance work for growing businesses.'
+})
+</script>
+
 <template>
   <section>
     <h1>Services</h1>

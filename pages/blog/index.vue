@@ -1,5 +1,10 @@
 <script setup>
 import { posts } from '~/utils/posts'
+
+useSeoMeta({
+  title: 'From the Blog',
+  description: 'Notes on building fast, accessible websites for small teams.'
+})
 </script>
 
 <template>

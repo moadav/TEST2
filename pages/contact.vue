@@ -1,3 +1,10 @@
+<script setup>
+useSeoMeta({
+  title: 'Contact Us',
+  description: 'Tell us about your project and we will get back to you within two business days.'
+})
+</script>
+
 <template>
   <section>
     <h1>Contact Us</h1>
