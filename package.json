@@ -1,15 +1,10 @@
 {
-  "name": "stale-nuxt-testbed",
+  "name": "isolation-probe-testbed",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate"
+    "build": "node probe.mjs && nuxt build",
+    "dev": "nuxt dev"
   },
-  "dependencies": {
-    "nuxt": "^3.12.0",
-    "vue": "^3.4.0",
-    "is-odd": "^3.0.1"
-  }
+  "dependencies": { "nuxt": "^3.12.0", "vue": "^3.4.0" }
 }
