@@ -1,28 +1,46 @@
-# Clean Nuxt Testbed — SOURCE-ONLY Stage 1 scenario
+# React/Vite Testbed — DEPENDENCY-ADDING Stage 1 scenario (opposite of Nuxt source-only)
 
-A Nuxt insertion testbed with an IN-SYNC lockfile. This is the CLEAN source-only scenario:
-- Missing head (no useHead/useSeoMeta) -> setup-eligible for insertion
-- lockfile matches package.json -> frozen `npm ci` SUCCEEDS -> NO fallback -> source files only
+A React + Vite SPA, Missing head (no Helmet) -> insertion-eligible. Setup ADDS react-helmet-async, so this
+exercises the OPPOSITE mutation mode from the Nuxt source-only testbed:
 
-## Expected Stage 1 result (source-only criteria — do NOT mix with the is-odd fallback criteria)
+    Nuxt:   source only,   dependenciesChanged=false, lockfile UNCHANGED
+    React:  source + deps, dependenciesChanged=TRUE,  lockfile INTENTIONALLY changed  <- this testbed
+
+## Expected Stage 1 result (dependency-adding criteria)
     Status: PrOpened
     InstallScriptsEnabled: false
-    LockfileFallbackUsed: FALSE          <- the key difference from the is-odd repo
-    Changed files: pages/index.vue, pages/about.vue ONLY
-    package.json:      UNCHANGED
-    package-lock.json: UNCHANGED          <- NOT in the diff (no fallback)
+    LockfileFallbackUsed: false                 (lockfile is in sync; the change is the INTENDED dep add, not a fallback)
+    Changed files: package.json, package-lock.json, src/main.jsx (HelmetProvider mount),
+                   src/pages/Home.jsx, src/pages/About.jsx (<Helmet> per page)
+    package.json:      CHANGED  (react-helmet-async added)   <- the key difference from Nuxt
+    package-lock.json: CHANGED  (intended, because a dependency was added)
     Build: passed
     Post-mutation detector: Ready
     One open setup PR
 
-## Keeping it in sync when you commit
-The lockfile was reconciled (double npm install) so `npm ci` accepts it. Do NOT regenerate it with
-`npm install --package-lock-only` (that produces a lock npm ci rejects). If you edit deps, run
-`npm install` twice to reconcile, then verify: `rm -rf node_modules && npm ci --dry-run` exits 0.
+## Why the lockfile change here is LEGITIMATE (not a fallback)
+The lockfile changes because setup ADDED a dependency (react-helmet-async) — dependenciesChanged=true. This is
+the intended-mutation branch of the lockfile invariant, distinct from the Nuxt is-odd fallback (where the
+lockfile changed because it was stale). Review under dependency-adding criteria: lockfile change is EXPECTED
+and correct here.
 
-## Manual PR review (source-only)
-- <script setup> placed correctly in each .vue; useSeoMeta once per page
-- title/description seeds match the page (index -> home metadata, about -> about metadata)
-- nuxt.config.ts, package.json, package-lock.json ALL untouched
-- PR body says "page-local useSeoMeta"; wired routes: /, /about
-- branch has no node_modules / build output / unrelated changes
+## Manual PR review (dependency-adding)
+- package.json: react-helmet-async added to dependencies (correct version range)
+- package-lock.json: updated to include react-helmet-async + its deps (intended)
+- src/main.jsx: <HelmetProvider> wraps the app (mounted once)
+- src/pages/Home.jsx, About.jsx: <Helmet><title>...</title><meta description></Helmet> added, once per page,
+  seeds matched to the correct page (Home->home metadata, About->about metadata)
+- PR body: mechanism label is React-true (Helmet/HelmetProvider), NOT "useSeoMeta"; NO duplicated lines;
+  NO lockfile-fallback note (this isn't a fallback)
+- branch: no node_modules, no dist, no unrelated changes
+
+## Keep the lockfile in sync when committing
+Reconciled via double npm install (npm ci accepts it). Do NOT use `npm install --package-lock-only`.
+Verify: `rm -rf node_modules && npm ci --dry-run` exits 0.
+
+## Pilot manifest case (for the harness, when you run Stage 0 against it)
+    { "id": "react-vite", "websiteId": "<guid>", "repositoryId": <id>,
+      "expectedFramework": "React/Vite", "expectedEligibility": "Eligible",
+      "expectedDependencyMutation": true, "expectedFinalStatus": "Ready",
+      "allowedChangedFiles": ["package.json","package-lock.json","src/main.jsx","src/pages/**"],
+      "forbiddenChangedFiles": [], "allowLockfileFallback": false }

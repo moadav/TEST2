@@ -1,10 +1,16 @@
 {
-  "name": "clean-nuxt-testbed",
+  "name": "react-vite-testbed",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
-  "scripts": { "build": "nuxt build", "dev": "nuxt dev", "generate": "nuxt generate" },
+  "scripts": { "dev": "vite", "build": "vite build", "preview": "vite preview" },
   "dependencies": {
-    "nuxt": "^3.12.0",
-    "vue": "^3.4.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0"
   }
 }
