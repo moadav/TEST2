@@ -1,40 +1,40 @@
-# SvelteKit Testbed — SOURCE-ONLY Stage 1 scenario (third mechanism: <svelte:head>)
+# Plain Vue Testbed — ABSTENTION test (the negative case)
 
-SvelteKit with static routes, Missing head (no <svelte:head>) -> insertion-eligible. Setup inserts
-<svelte:head> with title/description into +page.svelte files. Source-only mode, same as Nuxt:
+A plain Vue 3 + Vite SPA — NOT Nuxt, NOT SvelteKit. This is the ABSTENTION test: the detector must recognize
+it is unsupported and the gate must REFUSE setup. Unlike every other testbed (which should produce a PR),
+this one must produce NOTHING.
 
-    dependenciesChanged = false
-    lockfile UNCHANGED
-    LockfileFallbackUsed = false
+## Why this is the sharp test: Nuxt != plain Vue
+Plain Vue shares Vue SFCs (.vue files) with Nuxt, so a naive detector could misclassify it as Nuxt and try to
+run useSeoMeta setup that doesn't apply. This repo is deliberately, unambiguously plain Vue:
+  - NO nuxt dependency, NO nuxt.config
+  - explicit vue-router (manual routes) instead of Nuxt's pages/ auto-routing
+  - createApp(...).mount('#app') entry (plain Vue), not Nuxt's app
+  - @vitejs/plugin-vue, not nuxt
 
-## Expected Stage 1 result (source-only criteria — same family as Nuxt, NOT the React dep-adding mode)
-    Status: PrOpened
-    InstallScriptsEnabled: false
-    LockfileFallbackUsed: false
-    Changed files: src/routes/+page.svelte, src/routes/about/+page.svelte ONLY
-    package.json / package-lock.json: UNCHANGED
-    Build: passed
-    Post-mutation detector: Ready
-    One open setup PR
+## Expected result — CLEAN ABSTENTION (do NOT expect a PR)
+Capability scan:
+  - framework is NOT "Nuxt"  (must-not-detect-as-Nuxt — the key assertion)
+  - setupEligibility is NOT "Eligible" (NotSupported / Unknown — specific label not required yet, since the
+    capability model has no first-class plain-Vue dimension)
+  - an explicit reason in the summary (why setup isn't offered)
+Setup attempt (if made):
+  - the eligibility gate REJECTS with HTTP 400 (not eligible) -> no run, no PR
+  - OR, if a run result comes back, it is NOT a wiring run: 0 changed files, no PR
+  - openSetupPrUrl is null / absent
 
-## Manual PR review (SvelteKit source-only)
-- <svelte:head> inserted into each +page.svelte (correct placement, valid Svelte 4 markup)
-- <title> and <meta name="description"> present, once per page
-- seeds match the page (/ -> home metadata, /about -> about metadata)
-- +layout.svelte, svelte.config.js, vite.config.js, app.html UNTOUCHED
-- package.json / package-lock.json UNCHANGED (no dep added — source only)
-- PR body: mechanism label is SvelteKit-true (<svelte:head>), NOT useSeoMeta or Helmet; no duplicated lines
-- branch: no node_modules, no .svelte-kit, no build output, no unrelated changes
+## What a FAILURE looks like (the bug this test catches)
+  - framework detected as "Nuxt"  -> misclassification
+  - setup runs and tries to insert useSeoMeta into .vue files -> WRONG mechanism for plain Vue
+  - any changed files / any PR opened
+If any of those happen, that's the Nuxt-vs-plain-Vue detector bug your spec warned about.
 
-## Version notes (testbed was aligned to these — matters for a clean build)
-- svelte@4 (uses <slot/> + export let, NOT $props()/{@render} runes — those are Svelte 5)
-- the sveltekit() Vite plugin imports from '@sveltejs/kit/vite' (NOT @sveltejs/vite-plugin-svelte)
-- lockfile reconciled via double npm install (npm ci accepts it). Don't use --package-lock-only.
+## Pilot manifest case (abstention shape — different keys from eligible cases)
+    { "id": "plain-vue-abstention", "websiteId": "<guid>", "repositoryId": <id>,
+      "mustNotDetectFramework": "Nuxt",
+      "expectSetupAttempt": false,
+      "expectedChangedFileCount": 0 }
 
-## Pilot manifest case
-    { "id": "sveltekit-static", "websiteId": "<guid>", "repositoryId": <id>,
-      "expectedFramework": "SvelteKit", "expectedEligibility": "Eligible",
-      "expectedDependencyMutation": false, "expectedFinalStatus": "Ready",
-      "allowedChangedFiles": ["src/routes/**"],
-      "forbiddenChangedFiles": ["package.json","package-lock.json","pnpm-lock.yaml","yarn.lock"],
-      "allowLockfileFallback": false }
+## Note on the honest expectation
+Do NOT require a specific Unknown-vs-NotSupported label yet — the capability model doesn't have a first-class
+Vue dimension. The assertions that matter: not-Nuxt, no setup executed, zero files changed, explicit reason.
