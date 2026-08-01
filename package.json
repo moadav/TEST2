@@ -1,10 +1,10 @@
 {
-  "name": "isolation-probe-testbed",
+  "name": "clean-nuxt-testbed",
   "private": true,
   "type": "module",
-  "scripts": {
-    "build": "node probe.mjs && nuxt build",
-    "dev": "nuxt dev"
-  },
-  "dependencies": { "nuxt": "^3.12.0", "vue": "^3.4.0" }
+  "scripts": { "build": "nuxt build", "dev": "nuxt dev", "generate": "nuxt generate" },
+  "dependencies": {
+    "nuxt": "^3.12.0",
+    "vue": "^3.4.0"
+  }
 }

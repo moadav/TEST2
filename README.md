@@ -1,21 +1,28 @@
-# Isolation Probe Testbed (item #3) — run the probe THROUGH the gate
+# Clean Nuxt Testbed — SOURCE-ONLY Stage 1 scenario
 
-A Nuxt insertion testbed whose build runs `node probe.mjs && nuxt build`. When a setup runs, the gate spawns
-the build in ITS environment (on the Container App worker, where the real secrets live) — so the probe reports
-whether the env allowlist + token scrub actually isolate the child.
+A Nuxt insertion testbed with an IN-SYNC lockfile. This is the CLEAN source-only scenario:
+- Missing head (no useHead/useSeoMeta) -> setup-eligible for insertion
+- lockfile matches package.json -> frozen `npm ci` SUCCEEDS -> NO fallback -> source files only
 
-## Why not just run probe.mjs locally?
-Your laptop doesn't have GITHUB_TOKEN / DATABASE_URL / Azure creds set — those live in the Container App. So a
-local probe run is a false PASS. The probe is only meaningful running IN the gate's spawned process on the
-deployed worker, which is where the secrets exist to leak.
+## Expected Stage 1 result (source-only criteria — do NOT mix with the is-odd fallback criteria)
+    Status: PrOpened
+    InstallScriptsEnabled: false
+    LockfileFallbackUsed: FALSE          <- the key difference from the is-odd repo
+    Changed files: pages/index.vue, pages/about.vue ONLY
+    package.json:      UNCHANGED
+    package-lock.json: UNCHANGED          <- NOT in the diff (no fallback)
+    Build: passed
+    Post-mutation detector: Ready
+    One open setup PR
 
-## Use it as a BEFORE/AFTER
-1. BEFORE applying the item-#3 edits: push this, run a setup (dry run OK). The build runs probe.mjs first; if
-   the gate still inherits the worker env / leaves the token in .git/config, the probe EXITS 1 -> the setup
-   returns InstallOrBuildFailed and buildDetail shows "PROBE FAIL — leaks: env:GITHUB_TOKEN ...". That proves
-   the leak exists today AND that the probe runs in-gate.
-2. Apply the allowlist edit (remove the denylist) + the token-scrub edit.
-3. AFTER: push/run again. Probe EXITS 0 -> build proceeds to nuxt build -> setup reaches DryRunReady/PrOpened.
-   buildDetail no longer shows leaks. That proves both leak paths are closed on the real runner.
+## Keeping it in sync when you commit
+The lockfile was reconciled (double npm install) so `npm ci` accepts it. Do NOT regenerate it with
+`npm install --package-lock-only` (that produces a lock npm ci rejects). If you edit deps, run
+`npm install` twice to reconcile, then verify: `rm -rf node_modules && npm ci --dry-run` exits 0.
 
-The delta between BEFORE (fail, leaks named) and AFTER (pass) is the isolation proof.
+## Manual PR review (source-only)
+- <script setup> placed correctly in each .vue; useSeoMeta once per page
+- title/description seeds match the page (index -> home metadata, about -> about metadata)
+- nuxt.config.ts, package.json, package-lock.json ALL untouched
+- PR body says "page-local useSeoMeta"; wired routes: /, /about
+- branch has no node_modules / build output / unrelated changes
